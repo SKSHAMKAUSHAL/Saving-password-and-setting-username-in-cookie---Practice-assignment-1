@@ -1,94 +1,33 @@
-const MIN = 100;
-const MAX = 999;
-const pinInput = document.getElementById('pin');
-const sha256HashView = document.getElementById('sha256-hash');
-const resultView = document.getElementById('result');
-
-// a function to store in the local storage
-function store(key, value) {
-  localStorage.setItem(key, value);
-}
-
-// a function to retrieve from the local storage
-function retrieve(key) {
-  return localStorage.getItem(key);
-}
-
-function getRandomArbitrary(min, max) {
-  let cached;
-  cached = Math.random() * (max - min) + min;
-  cached = Math.floor(cached);
-  return cached;
-}
-
-// a function to clear the local storage
-function clear() {
-  localStorage.clear();
-}
-
-// a function to generate sha256 hash of the given string
-async function sha256(message) {
-  // encode as UTF-8
-  const msgBuffer = new TextEncoder().encode(message);
-
-  // hash the message
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-
-  // convert ArrayBuffer to Array
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-
-  // convert bytes to hex string
-  const hashHex = hashArray
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
-  return hashHex;
-}
-
-async function getSHA256Hash() {
-  let cached = retrieve('sha256');
-  if (cached) {
-    return cached;
+document.addEventListener('DOMContentLoaded', function() {
+  // Function to get the value of a cookie by name
+  function getCookie(name) {
+    let cookieArray = document.cookie.split('; ');
+    let cookie = cookieArray.find((row) => row.startsWith(name + '='));
+    return cookie ? cookie.split('=')[1] : null;
   }
 
-  cached = await sha256(getRandomArbitrary(MIN, MAX));
-  store('sha256', cached);
-  return cached;
-}
-
-async function main() {
-  sha256HashView.innerHTML = 'Calculating...';
-  const hash = await getSHA256Hash();
-  sha256HashView.innerHTML = hash;
-}
-
-async function test() {
-  const pin = pinInput.value;
-
-  if (pin.length !== 3) {
-    resultView.innerHTML = '💡 not 3 digits';
-    resultView.classList.remove('hidden');
-    return;
+  // Function to set a cookie
+  function setCookie(name, value, daysToExpire) {
+    let date = new Date();
+    date.setTime(date.getTime() + daysToExpire * 24 * 60 * 60 * 1000);
+    document.cookie =
+      name + '=' + value + ';expires=' + date.toUTCString() + ';path=/';
   }
 
-  const sha256HashView = document.getElementById('sha256-hash');
-  const hasedPin = await sha256(pin);
+  // 1. Get the value of the 'count' cookie
+  let count = getCookie('count');
 
-  if (hasedPin === sha256HashView.innerHTML) {
-    resultView.innerHTML = '🎉 success';
-    resultView.classList.add('success');
-  } else {
-    resultView.innerHTML = '❌ failed';
+  // 2. If the cookie exists, increment the value and update the cookie
+  if (count !== null){
+    count++;
+  }else {
+    count = 1;
   }
-  resultView.classList.remove('hidden');
-}
-
-// ensure pinInput only accepts numbers and is 3 digits long
-pinInput.addEventListener('input', (e) => {
-  const { value } = e.target;
-  pinInput.value = value.replace(/\D/g, '').slice(0, 3);
+  // 3. If the cookie does not exist, create it and set the value to 1
+  setCookie('count', count, 9)
+  // 4. Display the count on the webpage
+  let countDisplay = document.createElement('h5');
+  countDisplay.textContent = `Total number of count is ${count}`
+  document.body.appendChild(countDisplay);
+  // your code here
 });
-
-// attach the test function to the button
-document.getElementById('check').addEventListener('click', test);
-
-main();
